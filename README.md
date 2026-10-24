@@ -1,121 +1,167 @@
-## Automated TWRP compilation based on Github Action
+```markdown
+# TWRP Device Tree for BBK A2 (P22H190) – Unisoc UMS512
 
-## Advertising
+This repository provides the device tree and build instructions for **TWRP (Team Win Recovery Project)** on the **BBK A2** smartphone (model **P22H190**) powered by the **Unisoc UMS512 (Tiger T618)** SoC.
 
-1. OrangeFox is [here](https://github.com/azwhikaru/Action-OFRP-Builder)
+> **✅ Status: Fully Functional**  
+> ADB, MTP, `/data` decryption (FBE), backup/restore, and flashing are all confirmed working.  
+> The only requirement is to patch the kernel to bypass the integrity check – guidance is provided below.
 
-## Notice
+---
 
-1. Github Actions service is **NOT** unlimited so to avoid waste, don't use unverified source code in this, the best used to automate builds of repositories that are already stabilized
+## Device Specifications
 
-2. Before you make any changes, make sure that the repository you are operating in belongs to you. **"Fork" if you want to commit code, otherwise use "Use this template"**
+| Item | Details |
+|------|---------|
+| **Model** | EEBBK A2 (P22H190) |
+| **SoC / CPU** | Unisoc UMS512 (Tiger T618) |
+| **CPU Architecture** | ARM64‑v8A (Octa‑core Cortex‑A75/A55) |
+| **Android Version** | 11 (based on kernel logs) |
 
-3. issues and Pull Requests may **NOT** get a reply. If you think is really necessary, use email on my profile to contact me
+---
 
-4. Python 2 in Debian (Ubuntu) has been **removed**. If you are working on Android 8.1 and below, use *Recovery Build (Legacy)*
+## About This Tree
 
-5. Don't ask any questions about your source code, such as
-	- No rule to make ...
-	- Image ... out of size
+This tree contains:
+- Board configuration for TWRP
+- Partition layout (`fstab`)
+- Recovery UI settings
+- Build scripts for the UMS512 platform
 
-## Thanks to
+**Current Status:**  
+- TWRP builds successfully.  
+- Kernel panic can be bypassed with the provided kernel patching methods.  
+- All core recovery features are **fully functional** after applying the bypass.
 
-All contributors
+**Working Features:**
+- ADB (sideload, shell, logcat)
+- MTP (file transfer between PC and device)
+- `/data` partition mount and decryption (FBE supported)
+- Backup / Restore (including system, data, boot, etc.)
+- Flashing ZIP and IMG files
+- Touchscreen input
+- UI brightness control (workaround for screen‑lock issue, if any)
 
-## Parameter Description
+---
 
-| Name                 | Description                                       | Example                                                      |
-| -------------------- | ------------------------------------------------- | ------------------------------------------------------------ |
-| `MANIFEST_URL`       | Source address                                    | https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git |
-| `MANIFEST_BRANCH`    | Source branch                                     | twrp-12.1                                                    |
-| `DEVICE_TREE_URL`    | Device address                                    | https://github.com/TeamWin/android_device_asus_I003D         |
-| `DEVICE_TREE_BRANCH` | Device branch                                     | android-12.1                                                 |
-| `DEVICE_PATH`        | Device location                                   | device/asus/I003D                                            |
-| `COMMON_TREE_URL`    | Common tree address                               | https://github.com/TeamWin/android_device_asus_sm8250-common |
-| `COMMON_PATH`        | Common tree location                              | device/asus/sm8250-common                                    |
-| `DEVICE_NAME`        | Model name                                        | I003D                                                        |
-| `MAKEFILE_NAME`      | Makefile name                                     | twrp_I003D                                                   |
-| `BUILD_TARGET`       | Build Target Partition (boot/recovery/vendorboot) | recovery                                                     |
+## Prerequisites
 
------
-
-## How to use
-
-```
-For example, your username is: JohnSmith
-```
-
-#### 0. If you want to commit code, click 'Fork' in the upper right corner of this repository
-
-![image](https://user-images.githubusercontent.com/37921907/177914706-c92476c5-7e14-4fb3-be94-0c8a11dae874.png)
-
-#### 1. If you just want to use it simply, click 'Use this template' in the upper right corner of this repository
-
-![image](https://github.com/azwhikaru/Action-TWRP-Builder/assets/37921907/fae6ce3c-bd4c-4bbe-8050-5dd29dff2522)
-
-#### 2. After waiting for the automatic redirection, you will see your own username
-
-![image](https://user-images.githubusercontent.com/37921907/177915106-5bde6fc9-303c-479e-b290-22b48efd1e4e.png)
-
-#### 3. Change the [username and email](https://github.com/CaptainThrowback/Action-Recovery-Builder/blob/main/.github/workflows/Recovery%20Build.yml#L100-L101) in the workflow to reflect your Github credentials (optional)
-
-## Setting up SSH Keys (optional)
-
-#### 4. Go to Settings, then select Deploy keys and select "Add deploy key" button.
-
-#### 5. On your Android device, install [Termux](https://github.com/termux/termux-app/releases)
-
-#### 6. Install openssh in Termux and generate ssh keys. (Do not use passphrase for keys)
-
-NOTE: When creating the deploy key for a repository like git@github.com:owner/repo.git or https://github.com/owner/repo, put that URL into the key comment. (Hint: Try ssh-keygen ... -C "git@github.com:owner/repo.git".)
-owner = your Github username
+- **OS:** 64‑bit Linux (Ubuntu 18.04+)
+- **Disk space:** ≥30 GB
+- **RAM:** ≥4 GB (8+ GB recommended)
+- **Packages** (install with `sudo apt install ...`):
 
 ```
-pkg install openssh
-ssh-keygen -t ed25519 -C "git@github.com:owner/Action-Recovery-Builder.git"
+git-core gnupg flex bison gperf zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z-dev ccache libgl1-mesa-dev libxml2-utils xsltproc unzip openjdk-8-jdk build-essential
 ```
 
-#### 7. Add the keys to your repo. In Termux, use the following commands:
+Enable ccache (optional but recommended):
 
-```
-cd /data/data/com.termux/files/usr/etc/ssh
-cat ssh_host_ed25519_key.pub
-```
-
-  Select and copy the key then paste in the box for Key.
-  You can name it whatever you choose for the title.
-
-#### 8. Now to add your private ssh key. Back in Termux:
-
-```
-cat ssh_host_ed25519_key
+```bash
+export USE_CCACHE=1
+ccache -M 50G   # adjust size as needed
 ```
 
-   Copy the output from Termux.
+---
 
-   In your browser, select *Secrets* under the Security tab.
-   Select Actions
-   Select New repository secret
-   For the New secret name, it should be SSH_PRIVATE_KEY
-   Paste the output from ssh_host_ed25519_key into the Value box.
-   Then select Add secret.
+## Bypassing the Kernel Integrity Check
 
-## Building the Recovery
+The stock kernel (for UMS512) contains a verification routine inside the **drm_open** function (disassembled signature: `sub_FFFFFF8008563184`). It checks whether the loaded `recovery.img` is official; if not, it triggers a panic with the message:
 
-#### 9. Click 'Actions-Recovery Build'
+```
+Kernel panic - not syncing: BBK:recovery.img is destroyed  Error!
+```
 
-![image](https://user-images.githubusercontent.com/37921907/177915304-8731ed80-1d49-48c9-9848-70d0ac8f2720.png)
+This is evident from the `ramoops` logs and the provided IDA snippet (`kernelpatch.c`).
 
-#### 10. Click 'Run workflow' and fill in according to the above 'parameter description'
+You must **modify the kernel** to skip this check. Two approaches are possible:
 
-![image](https://user-images.githubusercontent.com/37921907/177915346-71c29149-78fb-4a00-996f-5d84ffc9eb8c.png)
+**Option 1 – Patch the kernel source code (if available)**  
+Locate the `drm_open` function in the kernel source (likely in `drivers/gpu/drm/` or a Unisoc‑specific driver). Find the conditional branch that leads to the panic (the string `"BBK:recovery.img is destroyed"` is a good search target). **Comment out or remove** the entire check, or force the condition to always evaluate to `false`.
 
-#### 11. After filling in, click 'Run workflow' to start running
+Example (pseudo‑code):
 
------
+```c
+// Original (simplified)
+if (some_check) {
+    panic("BBK:recovery.img is destroyed");
+}
+// Patch:
+// if (some_check) { ... }   // comment out
+```
 
-## Compilation results
+**Option 2 – Modify the compiled kernel binary (Image / zImage)**  
+If you only have the prebuilt kernel image, use a hex editor or IDA to **replace the conditional jump instruction with a NOP**:
 
-Can be downloaded at [Release](../../releases)
+1. Open the kernel image in IDA and locate `sub_FFFFFF8008563184`.
+2. Find the instruction that branches to the panic code (often a `cbz` / `cbnz` / `b.ne` etc.).
+3. Overwrite that instruction with `NOP` (ARM64 NOP is `0xD503201F`).
+4. Save the modified kernel image.
 
------
+**Important:** The exact offset depends on your kernel build. Use the `dmesg` log to confirm the panic string and cross‑reference with the disassembly.
+
+---
+
+## Build Instructions
+
+To build this recovery from source, follow these steps:
+
+1. Set up a TWRP build environment (It is recommended to use the AOSP11 branch, otherwise, the image memory disk may become too large, resulting in a failure to package successfully, with a 99% chance of failure). For example, use the minimal manifest:
+
+   ```
+   repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git -b twrp-11.0
+   repo sync
+   ```
+
+2. Clone this device tree into `device/bbk/P22H190`:
+
+   ```bash
+   git clone <your-repo-url> device/bbk/P22H190
+   ```
+
+   (Replace `<your-repo-url>` with the actual URL of this repository.)
+
+3. If you have kernel source and need to apply the patch, do so now and place the built `Image` (or `zImage`) in the device tree directory or specify its path in `BoardConfig`.
+
+4. Run the following commands to build:
+
+   ```bash
+   . build/envsetup.sh
+   lunch omni_P22H190-eng
+   mka recoveryimage
+   ```
+
+   For A/B devices, use `mka bootimage` instead.
+
+The output image will be located at `out/target/product/P22H190/recovery.img`.
+
+After building, flash the recovery along with the patched kernel (if not included in the recovery image):
+
+```bash
+fastboot flash recovery recovery.img
+fastboot flash boot patched_kernel.img   # if needed
+```
+
+---
+
+
+## Credits
+
+- TeamWin for TWRP
+- @rtyutechstudio & @Zhiyu722
+- The open‑source community
+- Special thanks to those who reversed the kernel checks
+
+---
+
+## License
+
+This device tree is licensed under the Apache License, Version 2.0.
+
+---
+
+**Use this software at your own risk. The authors are not responsible for bricked devices or data loss.**
+```
+
+---
+
